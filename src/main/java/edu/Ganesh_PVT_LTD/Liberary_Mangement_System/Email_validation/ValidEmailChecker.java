@@ -6,6 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Fine;
+import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Report;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Review;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.User;
 
@@ -246,6 +247,15 @@ public class ValidEmailChecker {
                }
          return null; // ✅ Input is valid
        }
+	public  static String isReviewIdEmptyNewer(Long reviewId) {
+        if (reviewId == null || reviewId < 0) {
+
+    return "❌ Review ID is required and must be a positive number";
+        
+    }
+return null; // ✅ Input is valid
+}
+
 	public  static String isReviewBookIdEmpty(Review review) {
 		if (review.getBookId().getBookId() == null || review.getBookId().getBookId() < 0) {
 
@@ -254,6 +264,14 @@ public class ValidEmailChecker {
                }
          return null; // ✅ Input is valid
        }
-		
+
+
+	public static String isReportIdEmpty(Report report) {
+		if (report.getReportId() == null || report.getReportId() < 0) {
+			return "❌ Report ID is required and must be a positive number";
+		}
+		return null;
+	}
+
 	}
 

@@ -620,10 +620,6 @@ public class Controller {
 	                            	 return "you are not authorized"; // Access denied for non-students, do nothing
 	                             }
 	                          
-	                             review.setReviewId(review.getReviewId());
-	                             review.setBookId(review.getBookId());
-	                             review.setUserId(review.getUserId()); // review author
-                                report.setReason(report.getReason());
      return service.reportreview(review, userId , report);
    }
     @GetMapping("report/getall")
@@ -638,8 +634,57 @@ public class Controller {
 		}
 		return service.GetAllReports(userId);
 	}
+     @PostMapping("report/searchbyid")
+    public Report searchReportById(@RequestBody Report report, HttpSession session) {
+     Long userId = (Long) session.getAttribute("userId");
+     String role = (String) session.getAttribute("role");
+		if (userId == null) {
+			return null; // User not logged in, do nothing
+		}
+		if (!"admin".trim().equalsIgnoreCase(role)) {
+			return null; // Access denied for non-admins, do nothing
+		}
+	return	service.searchReportById(report, userId);
+    }
+     
+     @PutMapping("report/updatestatus")
+     public String UpdateReportStatus(@RequestBody Report report , HttpSession session) {
+    	 Long userId = (Long) session.getAttribute("userId");
+         String role = (String) session.getAttribute("role");
+    		if (userId == null) {
+    			return "You must be Logged in to Update Report Status"; // User not logged in, do nothing
+    		}
+    		if (!"admin".trim().equalsIgnoreCase(role)) {
+    			return " Access denied for non-admins"; // Access denied for non-admins, do nothing
+    		}
+    	  return  service.UpdateReportStatus(report, userId);
+ 	}
+   
+    @DeleteMapping("report/delete")
+	public String DeleteReport(@RequestBody Report report , HttpSession session) {
+    	 Long userId = (Long) session.getAttribute("userId");
+         String role = (String) session.getAttribute("role");
+    		if (userId == null) {
+    			return "you must be logged in to Delete Report"; // User not logged in, do nothing
+    		}
+    		if (!"admin".trim().equalsIgnoreCase(role)) {
+    			return "Acesss denied "; // Access denied for non-admins, do nothing
+    		}
+    return	service.DeleteReport(report, userId);
+	}
     
-    
+    @GetMapping("report/resolved")
+	public String SeeReportedReslovedReview(@RequestBody Report report, HttpSession session) {
+    	Long userId = (Long) session.getAttribute("userId");
+    	String role = (String) session.getAttribute("role");
+    	        if (userId == null) {
+    	      return "you must be logged in to See Resolved reports"; // User not logged in, do nothing
+    	        }
+    	        if (!"admin".trim().equalsIgnoreCase(role)) {
+    	        	return "Access denied"; // Access denied for non-admins, do nothing
+    	        }
+    return  service.SeeReportedReslovedReview(report, userId);
+	}
 }
 
 	

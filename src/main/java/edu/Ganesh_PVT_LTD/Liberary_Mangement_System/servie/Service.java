@@ -564,16 +564,7 @@ public class Service {
 		return dao.GetAllReviews(userId);
 	}
 	public String reportreview(Review review, Long userId, Report report) {
-		String isreviewIdEmpty = ValidEmailChecker.isReviewIdEmpty(review);
-		if (isreviewIdEmpty != null) {
-			System.out.println("❌ Invalid Input (Review ID): " + isreviewIdEmpty);
-			return "invalid input: " + isreviewIdEmpty;
-		}
-		String isReviewBookIdempty = ValidEmailChecker.isReviewBookIdEmpty(review);
-		if (isReviewBookIdempty != null) {
-			System.out.println("❌ Invalid Input (Book ID): " + isReviewBookIdempty);
-			return "invalid input: " + isReviewBookIdempty;
-		}
+		
 		boolean isReported = dao.reportreview(review, userId , report);
 		return isReported ? "✅ Review reported successfully." : "❌ Failed to report review or review not found.";
 		
@@ -581,6 +572,38 @@ public class Service {
 	public List<Report> GetAllReports(Long userId) {
 	
 	return	dao.GetAllReports(userId);
+		
+	}
+	public Report searchReportById(Report report, Long userId) {
+		// Call DAO to search for the report by ID
+	return	dao.searchReportById(report, userId);
+		
+	}
+	public String UpdateReportStatus(Report report, Long userId) {
+		String isReportIdEmpty = ValidEmailChecker.isReportIdEmpty(report);
+		if (isReportIdEmpty != null) {
+			
+			return "invalid input:"+isReportIdEmpty; // Report ID is empty;
+		}
+		 
+            
+		boolean isStatusUpdatedforReport = dao.UpdateReportStatus(report, userId);
+		return  isStatusUpdatedforReport ? "Report Status has been updated by admin ": "Report Not found by this report id or Report status already updated"; // Return true if status updated successfully, false otherwise
+	}
+	public  String DeleteReport(Report report, Long userId) {
+		String isReportIdEmpty = ValidEmailChecker.isReportIdEmpty(report);
+		if (isReportIdEmpty != null) {
+			return "invalid input: " + isReportIdEmpty; // Report ID is empty
+		}
+	
+	boolean isreportDeleted =	dao.DeleteReport(report, userId);
+	return isreportDeleted ? "✅ Report Deleted Successfully" : "❌ Report Not Found or User Not Registered or not reviewed by admin or already deleted";
+		
+	}
+	public String SeeReportedReslovedReview(Report report, Long userId) {
+		
+
+	return	dao.SeeReportedReslovedReview(report, userId);
 		
 	}
 

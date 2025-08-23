@@ -21,6 +21,8 @@ import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.bind.annotation.RequestBody;
+
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.Email_Sender.Email_Automation;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.Email_validation.ValidEmailChecker;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.Password_Security.Secure_Password;
@@ -2064,6 +2066,7 @@ public class Dao {
 		Session session = factory.openSession();
 		Transaction tx = session.beginTransaction();
 		try {
+			
 			User existingUser = session.get(User.class, userId);
 			if (existingUser == null) {
 				System.out.println("User not found");
@@ -2127,51 +2130,45 @@ public class Dao {
 	}
 	public boolean  reportreview(Review review, Long userId, Report report) {
 		Session session = factory.openSession();
-		Transaction tx = session.beginTransaction();
-		try {
-			User existingUser = session.get(User.class, userId);
-			if (existingUser == null) {
-				logger.info("User not found");
-				return false; // User not found;
-			}
-
-			String isreviewIdEmpty = ValidEmailChecker.isReviewIdEmpty(review);
-			if (isreviewIdEmpty != null) {
-				logger.info("Review ID is empty");
+	    Transaction tx = session.beginTransaction();
+	    try {
+	    	Review existingReview = session.get(Review.class, review.getReviewId());
+			if (existingReview == null) {
+				System.out.println("Review not found");
 				return false;
 			}
-              String isReviewBookIdempty = ValidEmailChecker.isReviewBookIdEmpty(review);
-               if (isReviewBookIdempty != null) {
-               logger.info("Review Book ID is empty");
-               return false;
-              }
-			Criteria ct = session.createCriteria(Review.class);
-			ct.add(Restrictions.eq("reviewId", review.getReviewId()));
-			ct.add(Restrictions.eq("userId", existingUser));
-			ct.add(Restrictions.eq("bookId", review.getBookId()));
-			Review reviewToReport = (Review) ct.uniqueResult();
+	        User reportingUser = session.get(User.class, userId);
+	        if (reportingUser == null) {
+	            logger.info("Reporting user not found");
+	            return false;
+	        }
+	        
+	        String reason = report.getReason();
+	        if (reason == null || reason.trim().isEmpty()) {
+	            report.setReason("No reason provided");
+	        } else {
+	            report.setReason(report.getReason().trim());
+	        }
+	     
 
-			if (reviewToReport == null) {
-				System.out.println("Review not found for this user and book");
-				return false; // Review not found;
-			}
-           
-           report.setReportedBy(existingUser);
-           report.setStatus(false);
-           report.setReview(reviewToReport);
-           session.save(report);
-		   tx.commit();
-		  Email_Automation.EmailSendForReportReview(review , report);
-		  return true;
-		  
+	        // Save report
+	        report.setReportedBy(reportingUser); // who is reporting
+	        report.setStatus(false);
+	        report.setReview(existingReview);   // which review is being reported
+	        report.setCreatedAt(new Date());
+	        session.save(report);
 
-		} catch (Exception e) {
-			tx.rollback();
-			System.out.println("Transaction rolled back due to: " + e.getMessage());
-		} finally {
-			session.close();
-		}
-		return false;
+	        tx.commit();
+	        Email_Automation.EmailSendForReportReview(existingReview, report);
+	        return true;
+
+	    } catch (Exception e) {
+	        tx.rollback();
+	        System.out.println("Transaction rolled back due to: " + e.getMessage());
+	    } finally {
+	        session.close();
+	    }
+	    return false;
 	
 	
 	}
@@ -2192,6 +2189,171 @@ public class Dao {
 			return reports.stream().map(report -> new Report(report.getReportId(), report.getReportedBy(),
 					report.getReview()  ,report.getCreatedAt())).collect(Collectors.toList());
 			
+		} catch (Exception e) {
+			tx.rollback();
+			System.out.println("Transaction rolled back due to: " + e.getMessage());
+		} finally {
+			session.close();
+		}
+		return null;
+		
+	}
+	public Report searchReportById(Report report, Long userId) {
+		Session session = factory.openSession();
+		Transaction tx = session.beginTransaction();
+		try {
+			User existingUser = session.get(User.class, userId);
+			if (existingUser == null) {
+				logger.info("User not found");
+				return null ; // User not found;
+			}
+
+			String isReportIdEmpty = ValidEmailChecker.isReportIdEmpty(report);
+			if (isReportIdEmpty != null) {
+				logger.info("Report ID is empty");
+				return null; // Report ID is empty;
+			}
+
+			Criteria ct = session.createCriteria(Report.class);
+			ct.add(Restrictions.eq("reportId", report.getReportId()));
+			Report reportToSearch = (Report) ct.uniqueResult();
+
+			if (reportToSearch == null) {
+				logger.info("Report not found for this user");
+				return null; // Report not found;
+			}
+
+			tx.commit();
+			return reportToSearch; // Return the found report
+
+		} catch (Exception e) {
+			tx.rollback();
+			System.out.println("Transaction rolled back due to: " + e.getMessage());
+		} finally {
+			session.close();
+		}
+		return null;
+	}
+	public boolean UpdateReportStatus(Report report, Long userId) {
+		Session session = factory.openSession();
+		Transaction tx = session.beginTransaction();
+		try {
+			User existingUser = session.get(User.class, userId);
+			if (existingUser == null) {
+				logger.info("User not found");
+				return false; 			}
+            Report existingReport = session.get(Report.class, report.getReportId());
+			if (existingReport == null) {
+				logger.info("Report not found");
+				return false; // Report not found;
+			}
+			String isReportIdEmpty = ValidEmailChecker.isReportIdEmpty(report);
+			if (isReportIdEmpty != null) {
+				logger.info("Report ID is empty");
+				return false; // Report ID is empty;
+			}
+           
+			Criteria ct = session.createCriteria(Report.class);
+			ct.add(Restrictions.eq("reportId",existingReport.getReportId()));
+			Report ReportToupdate = (Report) ct.uniqueResult();
+
+			if (ReportToupdate == null) {
+				logger.info("Report not found for this user");
+				return false; // Review not found;
+			}
+			    boolean requestedStatus = report.isStatus(); // get the status sent by client
+		        if (ReportToupdate.isStatus() == requestedStatus) {
+		            logger.info("Report status is already " + requestedStatus);
+		            return false; // no need to update
+		        }
+             
+			ReportToupdate.setStatus(true); // Update the status to true
+			session.update(ReportToupdate);
+			tx.commit();
+            return true;
+		} catch (Exception e) {
+			tx.rollback();
+			System.out.println("Transaction rolled back due to: " + e.getMessage());
+		} finally {
+			session.close();
+		}
+		return false;
+		
+	}
+	public boolean DeleteReport(Report report, Long userId) {
+		Session session = factory.openSession();
+		Transaction tx = session.beginTransaction();
+		try {
+			User existingUser = session.get(User.class, userId);
+			if (existingUser == null) {
+				logger.info("User not found");
+				return false; // User not found;
+			}
+
+			String isReportIdEmpty = ValidEmailChecker.isReportIdEmpty(report);
+			if (isReportIdEmpty != null) {
+				logger.info("Report ID is empty");
+				return false; // Report ID is empty;
+			}
+            
+			Criteria ct = session.createCriteria(Report.class);
+			ct.add(Restrictions.eq("reportId", report.getReportId()));
+			Report reportToDelete = (Report) ct.uniqueResult();
+
+			if (reportToDelete == null) {
+				logger.info("Report not found for this user");
+				return false; // Report not found;
+			}
+	        if (!reportToDelete.isStatus()) {
+	            logger.info("Report not reviewed, cannot delete");
+	            return false;
+	        }	
+			session.delete(reportToDelete);
+			tx.commit();
+			return true;
+
+		} catch (Exception e) {
+			tx.rollback();
+			System.out.println("Transaction rolled back due to: " + e.getMessage());
+		} finally {
+			session.close();
+		}
+		return false;
+		
+	}
+	public String SeeReportedReslovedReview(Report report, Long userId) {
+		Session session = factory.openSession();
+		Transaction tx = session.beginTransaction();
+		try {
+			User existingUser = session.get(User.class, userId);
+			if (existingUser == null) {
+				logger.info("user not found ");
+				return "User not found"; // User not found;
+			}
+
+			String isReportIdEmpty = ValidEmailChecker.isReportIdEmpty(report);
+			if (isReportIdEmpty != null) {
+				logger.info("report id is empty");
+				return "report id is empty"; // Report ID is empty;
+			}
+
+			Criteria ct = session.createCriteria(Report.class);
+			ct.add(Restrictions.eq("reportId", report.getReportId()));
+			List<Report> reportToSee = (List) ct.list();
+
+			if (reportToSee == null) {
+				System.out.println("Report not found for this user");
+				return "report not found"; // Report not found;
+			}
+
+			if (reportToSee.get(0).isStatus()) {
+				return reportToSee.stream().map(
+						r -> "Report ID: " + r.getReportId() + ", Status: " + (r.isStatus() ? "Resolved" : "Pending"))
+						.collect(Collectors.joining("\n"));
+			} else {
+				return "This review is still pending resolution";
+			}
+
 		} catch (Exception e) {
 			tx.rollback();
 			System.out.println("Transaction rolled back due to: " + e.getMessage());

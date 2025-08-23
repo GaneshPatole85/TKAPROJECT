@@ -8,11 +8,15 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.PrePersist;
 
 @Entity
 public class Review {
 	
-	
+	@PrePersist
+	protected void onCreate() {
+	    this.createdAt = new Date();
+	}
 
 	public User getUserId() {
 		return userId;
@@ -33,11 +37,12 @@ public class Review {
 	public Date getCreatedAt() {
 		return createdAt;
 	}
-
+	
 	public void setCreatedAt(Date createdAt) {
 		this.createdAt = createdAt;
 	}
-
+    
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long reviewId;
@@ -49,7 +54,8 @@ public class Review {
 	@ManyToOne
 	@JoinColumn(name = "bookId") // foreign key in DB
 	private Book bookId;
-
+    
+	
     private Date createdAt;
 	public Review(Long  reviewId, String comment, Book book, User user) {
 		this.reviewId = reviewId;
