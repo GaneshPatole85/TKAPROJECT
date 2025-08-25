@@ -18,9 +18,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
+import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.externalapi.ExternalApi;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Book;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Fine;
+import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Post;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Report;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Review;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.User;
@@ -30,7 +33,16 @@ import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.servie.Service;
 public class Controller {
  @Autowired
  Service service;
-    //user services
+ 
+  
+  
+    @Autowired
+	public Controller(Service service) {
+	this.service = service;
+}
+
+
+//user services
  @PostMapping("/register")
  public String RegisterUser(@RequestBody User user  , HttpSession session ) { 
 	 String role = (String) session.getAttribute("role");
@@ -685,7 +697,59 @@ public class Controller {
     	        }
     return  service.SeeReportedReslovedReview(report, userId);
 	}
-}
+    
+    
+    @GetMapping("report/recently/reported")
+	public String SearchWhoRecentlyReportedReview(@RequestBody Report report, HttpSession session) {
+		Long userId = (Long) session.getAttribute("userId");
+		String role = (String) session.getAttribute("role");
+		if (userId == null) {
+			return "you must be logged in as admin to see recently who reported reviews"; // User not logged in, do nothing
+		}
+		if (!"admin".trim().equalsIgnoreCase(role)) {
+			return "Access denied "; // Access denied for non-admins, do nothing
+		}
+	return	service.SearchWhoRecentlyReportedReview(report, userId);
+		
+	}
+    
+    @PostMapping("report/sentemail")
+	public String SentEmailTothoseWhoseReportedReview(@RequestBody Report report, HttpSession session ) {
+		Long userId = (Long) session.getAttribute("userId");
+		String role = (String) session.getAttribute("role");
+		if (userId == null) {
+			return "you must be logged in as admin to send email "; // User not logged in, do nothing
+		}
+		if (!"admin".trim().equalsIgnoreCase(role)) {
+			return "Access diened"; // Access denied for non-admins, do nothing
+		}
+	return	service.SentEmailTothoseWhoseReportedReview(report , userId );
+	}
+     
+    @GetMapping("/external/{id}")
+    public ResponseEntity<String> getExternalApiData(@RequestParam  int id) {
+        String response = service.getExternalData(id);
+        return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/posts/create")
+	public ResponseEntity<Post> CreateNewPost(@RequestBody Post post) {
+	Post Response =	service.CreateNewPost(post);
+    return ResponseEntity.ok(Response);
+    }
+    
+   @PutMapping("/posts/update/{id}")
+	public ResponseEntity<Post> UpdatePost(@RequestParam int id , @RequestBody Post post) {
+	Post UpdatedResponse =	service.UpdatePost(post , id);
+	return ResponseEntity.ok(UpdatedResponse);
+	}
+   
+    @DeleteMapping("/posts/delete/{id}")
+	public ResponseEntity<Post> deletePost(@RequestParam int id ,@RequestBody Post post) {
+	 Post IsdeletedResponse =   service.deletePost(id , post);
+	 return ResponseEntity.ok(IsdeletedResponse);
+	}
+  }
 
 	
 

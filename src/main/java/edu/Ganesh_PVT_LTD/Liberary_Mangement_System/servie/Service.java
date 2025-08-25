@@ -13,6 +13,7 @@ import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.TransactionIdgenerator.Gener
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.dao.Dao;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Book;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Fine;
+import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Post;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Report;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Review;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.User;
@@ -21,6 +22,11 @@ import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.User;
 public class Service {
    @Autowired
    Dao dao;
+   
+    @Autowired
+	public Service(Dao dao) {
+	this.dao = dao;
+}
 	public String RegisterUser(User user) {
 	    // Step 2: Validate Email Format
 	    String emailValidation = ValidEmailChecker.Isvalid(user);
@@ -604,6 +610,45 @@ public class Service {
 		
 
 	return	dao.SeeReportedReslovedReview(report, userId);
+		
+	}
+	
+	public String SearchWhoRecentlyReportedReview(Report report, Long userId) {
+		String isReportIdEmpty = ValidEmailChecker.isReportIdEmpty(report);
+		if (isReportIdEmpty != null) {
+			
+			return "report id is empty"; // Report ID is empty;
+		}
+		
+	return	dao.SearchWhoRecentlyReportedReview(report, userId);
+		
+	}
+	
+	public String SentEmailTothoseWhoseReportedReview(Report report, Long userId) {
+		String isReportIdEmpty = ValidEmailChecker.isReportIdEmpty(report);
+		if (isReportIdEmpty != null) {
+			return "report id is empty"; // Report ID is empty";
+
+		}
+
+	boolean isEmailSent =	dao.SentEmailTothoseWhoseReportedReview(report, userId );
+	return isEmailSent ? "✅ Email Sent Successfully" : "❌ Report Not Found or User Not Registered or not reviewed by admin or already deleted";
+		
+	}
+	
+	 public String getExternalData(int id) {
+	        return dao.fetchDataFromExternalApi(id);
+	    }
+	public Post CreateNewPost(Post post) {
+	return	dao.CreateNewPost(post);
+		
+	}
+	public Post UpdatePost( Post post , int id) {
+	return	dao.UpdatePost(post, id);
+		
+	}
+	public Post deletePost(int id, Post post) {
+	return	dao.deletePost(id, post);
 		
 	}
 

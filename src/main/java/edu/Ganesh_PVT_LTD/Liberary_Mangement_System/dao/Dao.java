@@ -22,6 +22,7 @@ import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.client.RestTemplate;
 
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.Email_Sender.Email_Automation;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.Email_validation.ValidEmailChecker;
@@ -29,6 +30,7 @@ import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.Password_Security.Secure_Pas
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.TransactionIdgenerator.GenerateTID;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Book;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Fine;
+import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Post;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Report;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Review;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.User;
@@ -37,6 +39,14 @@ import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.User;
 public class Dao {
 	 @Autowired
 	 SessionFactory factory;
+	 
+	 
+	 private final RestTemplate restTemplate;
+	 private  static final String BASE_URL = "https://jsonplaceholder.typicode.com/posts"; 
+	    public Dao(RestTemplate restTemplate) {
+		this.restTemplate = restTemplate;
+	}
+	    
 	 final Logger logger = Logger.getLogger(Dao.class.getName());
 	public boolean RegisterUser(User user) {
 		 Session session = factory.openSession();
@@ -2363,9 +2373,102 @@ public class Dao {
 		return null;
 		
 	}
+	public String SearchWhoRecentlyReportedReview(Report report, Long userId) {
+		Session session = factory.openSession();
+		Transaction tx = session.beginTransaction();
+		try {
+			User existingUser = session.get(User.class, userId);
+			if (existingUser == null) {
+				return "user not registered"; // User not found;
+			}
+           
+			Criteria ct = session.createCriteria(Report.class);
+			ct.add(Restrictions.eq("reportId", report.getReportId()));
+			List<Report> reportToSee = (List) ct.list();
+
+			if (reportToSee == null) {
+				return "Report not found for this user"; // Report not found;
+			}
+
+			if (reportToSee.get(0).isStatus()) {
+			return	reportToSee.stream()
+						.map(r -> "Report ID: " + r.getReportId() + ", Reported By: " + r.getReportedBy().getName())
+						.collect(Collectors.joining("\n"));
+			} else {
+				return "This review is still pending resolution ";
+			}
+
+		} catch (Exception e) {
+			tx.rollback();
+			System.out.println("Transaction rolled back due to: " + e.getMessage());
+		} finally {
+			session.close();
+		}
+		return null;
+		
+	}
 	
-	}	
+	public boolean SentEmailTothoseWhoseReportedReview(Report report, Long userId) {
+		Session session = factory.openSession();
+		Transaction tx = session.beginTransaction();
+		try {
+			User existingUser = session.get(User.class, userId);
+			if (existingUser == null) {
+				logger.info("user not found ");
+                return false; // User not found;
+			}
+
+			Criteria ct = session.createCriteria(Report.class);
+			ct.add(Restrictions.eq("reportId", report.getReportId()));
+			List<Report> reportToSee = (List) ct.list();
+
+			if (reportToSee == null) {
+				System.out.println("Report not found for this user");
+                return false; // Report not found;
+			}
+
+			if (reportToSee.get(0).isStatus()) {
+				for (Report r : reportToSee) {
+					Email_Automation.EmailSendForResolvedReportedReview(r);
+					
+				}
+				return true;
+			} else {
+				logger.info("This review is still pending resolution");
+				return false;
+			}
+
+		} catch (Exception e) {
+			tx.rollback();
+			System.out.println("Transaction rolled back due to: " + e.getMessage());
+		} finally {
+			session.close();
+		}
+		return false;
+		
+	}
 	
+	  public String fetchDataFromExternalApi(int id) {
+	        String url = "https://jsonplaceholder.typicode.com/posts/{id}"; // Example API
+	        return restTemplate.getForObject(url, String.class , id);
+	    }
+	public Post CreateNewPost(Post post) {
+		return restTemplate.postForObject(BASE_URL, post, Post.class);
+		
+	}
+
+	public Post UpdatePost(Post post, int id) {
+		String url = BASE_URL + "/" + id;
+		restTemplate.put(url, post);
+		return restTemplate.getForObject(url, Post.class);
+	}
+	public Post deletePost(int id, Post post) {
+		String url = BASE_URL + "/" + id;
+	   	restTemplate.delete(url , Post.class);
+	   	return post;
+		
+	}
+}
 	
 	
 	

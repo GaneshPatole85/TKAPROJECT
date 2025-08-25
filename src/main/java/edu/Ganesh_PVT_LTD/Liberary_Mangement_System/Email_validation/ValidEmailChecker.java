@@ -273,5 +273,17 @@ return null; // ✅ Input is valid
 		return null;
 	}
 
+	public static String isReportByUserIdEmpty(Report report) {
+		if (report.getReportedBy().getUserId() == null || report.getReportedBy().getUserId() < 0) {
+			return "❌ Reported user ID is required and must be a positive number";
+		}
+		return null;
+	}
+	public static String isReportResvoled(Report report) {
+		if (report.isStatus() == false) {
+			return "❌ Report status should be true to check resolved reports";
+		}
+		return null;
+	}
 	}
 

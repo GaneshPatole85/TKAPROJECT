@@ -13,6 +13,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Report;
+import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Review;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.User;
 
 
@@ -375,4 +376,43 @@ public class Email_Automation {
 			}
 		}
  
+
+
+public static String EmailSendForResolvedReportedReview(  Report report) {
+	final String from = "gpatole473@gmail.com";
+	final String password = "lnvycjtvejjyqtct"; // Use App Password for Gmail
+	final String adminEmail = "gpatole899@gmail.com"; // Replace with actual admin email
+
+	Properties props = new Properties();
+	props.put("mail.smtp.auth", "true");
+	props.put("mail.smtp.starttls.enable", "true");
+	props.put("mail.smtp.host", "smtp.gmail.com");
+	props.put("mail.smtp.port", "587");
+
+	Session session = Session.getInstance(props, new Authenticator() {
+		protected PasswordAuthentication getPasswordAuthentication() {
+			return new PasswordAuthentication(from, password);
+		}
+	});
+
+	try {
+		Message message = new MimeMessage(session);
+		message.setFrom(new InternetAddress(from));
+		message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(adminEmail));
+		message.setSubject("Review Report Notification");
+		message.setText("hellow " + report.getReportedBy().getName() + " hope you are doing well./n"
+				+"so you have recently reported for inappropriate review./n"
+				+ " and we really appriciate you for this action./n"
+				+"we have resolved your report./n"
+				+"Best Regards,/n"
+				+ " Team GaneshApp");
+
+		Transport.send(message);
+		return "✅ Report email sent successfully to admin.";
+	} catch (MessagingException e) {
+		e.printStackTrace();
+		return "❌ Error while sending report email: " + e.getMessage();
+	}
+}
+
 }
