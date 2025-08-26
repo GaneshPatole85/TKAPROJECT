@@ -4,6 +4,7 @@ package edu.Ganesh_PVT_LTD.Liberary_Mangement_System.controller;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import javax.servlet.http.HttpSession;
 
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.Email_validation.ValidEmailChecker;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.externalapi.ExternalApi;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Book;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Fine;
@@ -27,6 +29,7 @@ import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Post;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Report;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Review;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.User;
+import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.WishList;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.servie.Service;
 
 @RestController
@@ -749,6 +752,103 @@ public class Controller {
 	 Post IsdeletedResponse =   service.deletePost(id , post);
 	 return ResponseEntity.ok(IsdeletedResponse);
 	}
+    
+    @PostMapping("/wishlist/add")
+	public ResponseEntity<String> addBookTowishlist(@RequestBody WishList wishlist ,  HttpSession session,  Long bookid) {
+		        Long UserId = (Long) session.getAttribute("userId");
+		        String role = (String) session.getAttribute("role");
+		        if (UserId == null) {
+		        	return ResponseEntity.status(HttpStatus.FORBIDDEN).body("not authorized"); // User not logged in"
+		        }
+				if (!"student".trim().equalsIgnoreCase(role.toString())) {
+					return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied"); // Access denied for
+																								// non-students
+				}
+				
+	 return ResponseEntity.ok( service.addBookTowishlist(wishlist , UserId , bookid));
+	}
+    
+    @DeleteMapping("/wishlist/delete")
+	public ResponseEntity<String> deleteWishlist(@RequestBody WishList wishlist, HttpSession session) {
+		Long UserId = (Long) session.getAttribute("userId");
+		String role = (String) session.getAttribute("role");
+		if (UserId == null) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(" please log in "); // User not logged in"
+		}
+		if (!"student".trim().equalsIgnoreCase(role.toString())) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(" you are not an student"); // Access denied for non-students
+		}
+	 return ResponseEntity.ok(service.deleteWishlist(wishlist, UserId))	;
+
+	}
+
+    @GetMapping("/wishlist/searchbyuserid")
+	public ResponseEntity<Stream<Object>>  SearchwishListByUserId(@RequestBody WishList wishlist , HttpSession session) {
+       Long UserId = (Long) session.getAttribute("userId");
+       String role = (String) session.getAttribute("role");
+               if (UserId == null) {
+            	   return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null); // User not logged in";
+            	   
+               }
+				if (!"student".trim().equalsIgnoreCase(role.toString())) {
+					return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null); // Access denied for non-students
+				}
+	return ResponseEntity.ok(service.SearchwishListByUserId(wishlist , UserId));
+	}
+
+    @GetMapping("/wishlist/knowyourwishlistid")
+	public ResponseEntity<Long> KnowYourWishListId(@RequestBody WishList wishlist , HttpSession session) {
+    	Long UserId = (Long) session.getAttribute("userId");
+    	String role = (String) session.getAttribute("role");
+        if (UserId == null) {
+      	   return ResponseEntity.status(HttpStatus.FORBIDDEN).body(-1L); // User not logged in";
+        }
+         if (!"student".trim().equalsIgnoreCase(role.toString())) {
+                    	
+				return ResponseEntity.status(HttpStatus.FORBIDDEN).body(-2L); // Access denied for non-students
+			}
+       return ResponseEntity.ok(service.KnowYourWishListId(wishlist , UserId));
+	}
+    
+    @GetMapping("/wishlist/searchbywishlistid")
+	public ResponseEntity<WishList>  SearchwishListBywishListId(@RequestBody WishList wishlist , HttpSession session) {
+       Long UserId = (Long) session.getAttribute("userId");
+       String role = (String) session.getAttribute("role");
+               if (UserId == null) {
+            	   return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null); // User not logged in";
+            	   
+               }
+				if (!"student".trim().equalsIgnoreCase(role.toString())) {
+					return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null); // Access denied for non-students
+				}
+	return ResponseEntity.ok(service.SearchwishListBywishListId(wishlist , UserId));
+	}
+    @GetMapping("/wishlist/knowbook")
+    public ResponseEntity<String> searchBookFromWishList(@RequestBody WishList wishlist , HttpSession session) {
+    	 Long UserId = (Long) session.getAttribute("userId");
+         String role = (String) session.getAttribute("role");
+                 if (UserId == null) {
+              	   return  ResponseEntity.status(HttpStatus.FORBIDDEN).body("you must be logged in"); // User not logged in";
+              	   
+                 }
+  				if (!"student".trim().equalsIgnoreCase(role.toString())) {
+  					return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied") ; // Access denied for non-students
+  				}
+  		return ResponseEntity.ok(service.searchBookFromWishList(wishlist , UserId))	;
+    }
+    @PutMapping("/wishlist/reset")
+    public ResponseEntity<String> UpdateBookIdInwishlist(@RequestBody WishList wishlist , HttpSession session) {
+    	 Long UserId = (Long) session.getAttribute("userId");
+         String role = (String) session.getAttribute("role");
+                 if (UserId == null) {
+              	   return ResponseEntity.status(HttpStatus.FORBIDDEN).body("user must be logged in") ; // User not logged in";
+              	   
+                 }
+  				if (!"student".trim().equalsIgnoreCase(role.toString())) {
+  					return ResponseEntity.status(HttpStatus.FORBIDDEN).body(" Access Denied"); // Access denied for non-students
+  				}
+  	return ResponseEntity.ok(service.UpdateBookIdInwishlist(wishlist ,  UserId))	;
+    }
   }
 
 	

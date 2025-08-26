@@ -1,6 +1,7 @@
 package edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models;
 
 import javax.persistence.*;
+
 import java.util.Date;
 
 @Entity
@@ -26,7 +27,7 @@ public class WishList {
     public WishList() {
         this.createdAt = new Date(); // auto set createdAt
     }
-
+ 
     public WishList(Book book, User createdBy) {
         this.book = book;
         this.createdBy = createdBy;
@@ -37,7 +38,7 @@ public class WishList {
     public Long getWishlistId() {
         return wishlistId;
     }
-
+    
     public void setWishlistId(Long wishlistId) {
         this.wishlistId = wishlistId;
     }
@@ -65,4 +66,6 @@ public class WishList {
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
+
+	
 }

@@ -5,10 +5,14 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Fine;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Report;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Review;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.User;
+import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.WishList;
 
 public class ValidEmailChecker {
 	 public static final  String Isvalid(User user) {
@@ -267,6 +271,7 @@ return null; // ✅ Input is valid
 
 
 	public static String isReportIdEmpty(Report report) {
+	
 		if (report.getReportId() == null || report.getReportId() < 0) {
 			return "❌ Report ID is required and must be a positive number";
 		}
@@ -274,16 +279,91 @@ return null; // ✅ Input is valid
 	}
 
 	public static String isReportByUserIdEmpty(Report report) {
+		String ConvertedLongIdtoString = String.valueOf(report.getReportedBy().getUserId());
 		if (report.getReportedBy().getUserId() == null || report.getReportedBy().getUserId() < 0) {
 			return "❌ Reported user ID is required and must be a positive number";
 		}
+		if (ConvertedLongIdtoString.matches(".*[a-zA-Z]+.*")) {
+			return "❌ Reported user ID should not contain alphabetic characters.";
+		}
+		if (ConvertedLongIdtoString.contains(".")) {
+			return "❌ Reported user ID should not be a decimal number.";
+		}
+		if (ConvertedLongIdtoString.matches(".*[!@#$%^&*(),.?\":{}|<>].*")) {
+			return "❌ Reported user ID should not contain special characters.";
+		}
+		
 		return null;
 	}
 	public static String isReportResvoled(Report report) {
+		String ConvertedLongIdtoString = String.valueOf(report.isStatus());
 		if (report.isStatus() == false) {
 			return "❌ Report status should be true to check resolved reports";
 		}
+		if (ConvertedLongIdtoString.contains(".")) {
+			return "❌ Report status should not be a decimal number.";
+		}
+		if (ConvertedLongIdtoString.matches(".*[!@#$%^&*(),.?\":{}|<>].*")) {
+			return "❌ Report status should not contain special characters.";
+		}
 		return null;
 	}
+
+
+
+	public static String EmptyBookInputIdForWishListNewer(WishList wishlist) {
+		Long wishlistbookid =wishlist.getBook().getBookId();
+	  String ConvertedLongIdtoString = String.valueOf(wishlistbookid);
+        if ( wishlistbookid == null || wishlistbookid <=0) {
+            
+           return "❌ Book ID Cant be zero or in minus";
+        }
+        if (ConvertedLongIdtoString.matches(".*[a-zA-Z]+.*")) {
+   		 return	"❌ Book ID should not contain alphabetic characters.";
+   		}
+   		if (ConvertedLongIdtoString.contains(".")) {
+   		return	"❌ Book ID should not be a decimal number.";
+   		}
+   		if (ConvertedLongIdtoString.matches(".*[!@#$%^&*(),.?\":{}|<>].*")) {
+   			return "❌ Book ID should not contain special characters.";
+   		}
+        return null; 
 	}
+
+ 
+	public static String isWishlistIdValid(WishList wishlist) {
+		if (wishlist.getWishlistId() == null || wishlist.getWishlistId() < 0) {
+			return "❌ Wishlist ID is required and must be a positive number";
+		}
+		String ConvertedLongIdtoString = String.valueOf(wishlist.getWishlistId());
+		if (ConvertedLongIdtoString.matches(".*[a-zA-Z]+.*")) {
+		 return	"❌ Wishlist ID should not contain alphabetic characters.";
+		}
+		if (ConvertedLongIdtoString.contains(".")) {
+		return	"❌ Wishlist ID should not be a decimal number.";
+		}
+		if (ConvertedLongIdtoString.matches(".*[!@#$%^&*(),.?\":{}|<>].*")) {
+			return "❌ Wishlist ID should not contain special characters.";
+		}
+		return null;
+	}
+
+	public static String IswishListcreatedbyempty(WishList wishlist) {
+	 String ConvertedLongIdtoString = String.valueOf(wishlist.getCreatedBy().getUserId());
+		if (wishlist.getCreatedBy() == null) {
+			return"❌ CreatedBy is required";
+		}
+		if (ConvertedLongIdtoString.matches(".*[a-zA-Z]+.*")) {
+			return "❌ CreatedBy ID should not contain alphabetic characters.";
+		}
+		if (ConvertedLongIdtoString.contains(".")) {
+		return	"❌ CreatedBy ID should not be a decimal number.";
+		}
+		if (ConvertedLongIdtoString.matches(".*[!@#$%^&*(),.?\":{}|<>].*")) {
+			 return "❌ CreatedBy ID should not contain special characters.";
+		}
+		return null;
+	}
+}
+
 

@@ -2,10 +2,12 @@ package edu.Ganesh_PVT_LTD.Liberary_Mangement_System.servie;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.Email_validation.ValidEmailChecker;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.Password_Security.Secure_Password;
@@ -17,6 +19,7 @@ import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Post;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Report;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Review;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.User;
+import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.WishList;
 
 @org.springframework.stereotype.Service
 public class Service {
@@ -651,5 +654,65 @@ public class Service {
 	return	dao.deletePost(id, post);
 		
 	}
-
+	public String addBookTowishlist(WishList wishlist, Long userId, Long bookid) {
+		
+        String IsbookidZero =  ValidEmailChecker.EmptyBookInputIdForWishListNewer(wishlist);
+        if (IsbookidZero != null) {
+         return "invalid input: " + IsbookidZero;
+	}
+  	boolean isBookAddedToWishlist =	dao.addBookTowishlist(wishlist , userId, bookid);
+	return isBookAddedToWishlist ? "Book added to wishlist successfully" : "Failed to add book to wishlist user not registered or book not found or book already in wishlist";
+		
+	}
+	public String deleteWishlist(WishList wishlist, Long userId) {
+		 String isWishlistIdEmpty = ValidEmailChecker.isWishlistIdValid(wishlist);
+         if (isWishlistIdEmpty != null) {
+             return "invalid input:"+isWishlistIdEmpty; // Wishlist ID is empty;
+         }
+	boolean isWishlistdeleted =	dao.deleteWishlist(wishlist , userId);
+	return isWishlistdeleted ?  "wishlist has been deleted" : "failed to delete wishlist or wishlist not found or user not registered";
+		
+	}
+	public Stream<Object> SearchwishListByUserId(WishList wishlist, Long userId) {
+		String isWishlistIdEmpty = ValidEmailChecker.IswishListcreatedbyempty(wishlist);
+		if (isWishlistIdEmpty != null) {
+			System.out.println("invalid input:" + isWishlistIdEmpty); // Wishlist ID is empty;
+			return null;
+		}
+	return	dao.SearchwishListByUserId(wishlist , userId);
+		
+	}
+	public Long KnowYourWishListId(WishList wishlist, Long userId) {
+String  checkifCreatedbyValid = ValidEmailChecker.IswishListcreatedbyempty(wishlist);
+if(checkifCreatedbyValid!=null) {
+	return 5L;
+}
+    return	dao.KnowYourWishListId(wishlist , userId);
+	}
+	public WishList SearchwishListBywishListId(WishList wishlist, Long userId) {
+		String isWishlistIdEmpty = ValidEmailChecker.isWishlistIdValid(wishlist);
+		if (isWishlistIdEmpty != null) {
+			System.out.println("invalid input:" + isWishlistIdEmpty); // Wishlist ID is empty;
+			return null;
+		}
+	return	dao.SearchwishListBywishListId(wishlist , userId);
+		
+	}
+	public String searchBookFromWishList(WishList wishlist, Long userId) {
+	String Checkcretedbyempty= ValidEmailChecker.IswishListcreatedbyempty(wishlist);
+	if(Checkcretedbyempty!=null) {
+		return "invalid input"+Checkcretedbyempty;
+	}
+	return	dao.searchBookFromWishList(wishlist , userId);
+		
+	}
+	public String UpdateBookIdInwishlist(WishList wishlist, Long userId) {
+	String isBookIdvalid =	ValidEmailChecker.EmptyBookInputIdForWishListNewer(wishlist);
+	if(isBookIdvalid!=null) {
+		return "invalid input"+isBookIdvalid;
+	}
+	boolean isWishListReset =	dao.UpdateBookIdInwishlist(wishlist , userId);
+	return isWishListReset ? "wishlist has been reset" :"user not found or wishlist not exist";
+		
+	}
 }

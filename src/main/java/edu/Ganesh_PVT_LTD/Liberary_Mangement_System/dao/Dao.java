@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.http.HttpSession;
 
@@ -20,6 +21,8 @@ import org.hibernate.criterion.Restrictions;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.object.SqlQuery;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.RestTemplate;
@@ -34,6 +37,7 @@ import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Post;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Report;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.Review;
 import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.User;
+import edu.Ganesh_PVT_LTD.Liberary_Mangement_System.models.WishList;
 
 @Repository
 public class Dao {
@@ -2466,6 +2470,234 @@ public class Dao {
 		String url = BASE_URL + "/" + id;
 	   	restTemplate.delete(url , Post.class);
 	   	return post;
+		
+	}
+	public boolean addBookTowishlist(WishList wishlist, Long userId, Long bookid) {
+	Session session = factory.openSession();
+	Transaction tx = session.beginTransaction();
+	try {
+        User existingUser = session.get(User.class, userId);
+        if (existingUser == null) {
+            logger.info("User not found");
+            return false; // User not found;
+        }
+        Book existingBook = session.get(Book.class, wishlist.getBook().getBookId());
+        if (existingBook == null) {
+            logger.info("Book not found");
+            return false; // Book not found;
+        }
+        
+    
+        Criteria ct = session.createCriteria(WishList.class);
+        ct.add(Restrictions.eq("createdBy", existingUser));
+        ct.add(Restrictions.eq("book", wishlist.getBook().getBookId()));
+        WishList existingWishlistEntry = (WishList) ct.uniqueResult();
+        if (existingWishlistEntry != null) {
+            logger.info("Book is already in the wishlist");
+            return false; // Book already in wishlist
+        }
+        
+        
+        wishlist.setCreatedBy(existingUser);
+        wishlist.setBook(existingBook);
+        wishlist.setCreatedAt(new Date());
+        session.save(wishlist);
+        tx.commit();
+        logger.info("Book added to wishlist successfully");
+        return true;
+        
+    } catch (Exception e) {
+        tx.rollback();
+        System.out.println("Transaction rolled back due to: " + e.getMessage());
+    }
+    finally {
+        session.close();
+		
+	}
+	return false;
+	}
+	public boolean deleteWishlist(WishList wishlist, Long userId) {
+		Session session = factory.openSession();
+        Transaction tx = session.beginTransaction();
+        try {
+            User existingUser = session.get(User.class, userId);
+            if (existingUser == null) {
+                logger.info("User not found");
+                return false ; // User not found;
+            }
+           
+            
+            Criteria ct = session.createCriteria(WishList.class);
+            ct.add(Restrictions.eq("wishlistId", wishlist.getWishlistId()));
+            ct.add(Restrictions.eq("createdBy", existingUser));
+            WishList wishlistToDelete = (WishList) ct.uniqueResult();
+			if (wishlistToDelete == null) {
+				logger.info("Wishlist entry not found for this user");
+				return false; // Wishlist entry not found;
+			}
+			session.delete(wishlistToDelete);
+			tx.commit();
+			logger.info("Wishlist entry deleted successfully");
+			return true;
+           
+        }    catch (Exception e) {
+            tx.rollback();
+            System.out.println("Transaction rolled back due to: " + e.getMessage());
+        } finally {
+            session.close();
+		}
+		return false;
+	}
+	public Stream<Object> SearchwishListByUserId(WishList wishlist, Long userId) {
+		Session session = factory.openSession();
+        Transaction tx = session.beginTransaction();
+        try {
+            User existingUser = session.get(User.class, userId);
+            if (existingUser == null) {
+                logger.info("User not found");
+                return null ; // User not found;
+            }
+           
+            
+            Criteria ct = session.createCriteria(WishList.class);
+            ct.add(Restrictions.eq("createdBy", existingUser.getUserId()));
+            List<WishList> wishlistEntries = ct.list();
+            if (wishlistEntries.isEmpty()) {
+                logger.info("No wishlist entries found for this user");
+                return null; // No wishlist entries found;
+            }
+            tx.commit();
+            return wishlistEntries.stream().map(w -> "Wishlist ID: " + w.getWishlistId() + ", Book Title: " + w.getBook().getTitle());
+           
+              
+        }    catch (Exception e) {
+            tx.rollback();
+            System.out.println("Transaction rolled back due to: " + e.getMessage());
+        } finally {
+            session.close();
+		
+	}
+		return null;
+}
+	public Long KnowYourWishListId(WishList wishlist, Long userId) {
+    
+		Session session = factory.openSession();
+        Transaction tx = session.beginTransaction();
+        try {
+            User existingUser = session.get(User.class, userId);
+            if (existingUser == null) {
+                logger.info("User not found");
+                return 1L; // User not found;
+            }
+           
+            
+            Criteria ct = session.createCriteria(WishList.class);
+            ct.add(Restrictions.eq("createdBy", existingUser));
+            WishList wishlistToFind = (WishList) ct.uniqueResult();
+			if (wishlistToFind == null) {
+				logger.info("Wishlist entry not found for this user");
+				return 2L ; // Wishlist entry not found;
+			}
+			
+			tx.commit();
+			logger.info("Wishlist entry deleted successfully");
+			return wishlistToFind.getWishlistId() ;
+           
+        }    catch (Exception e) {
+            tx.rollback();
+            System.out.println("Transaction rolled back due to: " + e.getMessage());
+        } finally {
+            session.close();
+		}
+		return 0L;
+	}
+	
+	public WishList SearchwishListBywishListId(WishList wishlist, Long userId) {
+		Session session = factory.openSession();
+        Transaction tx = session.beginTransaction();
+        try {
+            User existingUser = session.get(User.class, userId);
+            if (existingUser == null) {
+                logger.info("User not found");
+                return null ; // User not found;
+            }
+           
+            
+            Criteria ct = session.createCriteria(WishList.class);
+            ct.add(Restrictions.eq("wishlistId", wishlist.getWishlistId()));
+           WishList FindWishListId = (WishList) ct.uniqueResult();
+            if (FindWishListId==null) {
+                logger.info("No wishlist entries found for this user");
+                return null; // No wishlist entries found;
+            }
+            tx.commit();
+            return FindWishListId;
+           
+              
+        }    catch (Exception e) {
+            tx.rollback();
+            System.out.println("Transaction rolled back due to: " + e.getMessage());
+        } finally {
+            session.close();
+		
+	}
+		return null;
+}
+	public String searchBookFromWishList(WishList wishlist, Long userId) {
+		Session session = factory.openSession();
+        Transaction tx = session.beginTransaction();
+        try {
+            User existingUser = session.get(User.class, userId);
+            if (existingUser == null) {
+                logger.info("User not found");
+                return "user not Found"; // User not found;
+            }
+           
+            
+            Criteria ct = session.createCriteria(WishList.class);
+            ct.add(Restrictions.eq("createdBy", existingUser));
+           WishList FindWishListId = (WishList) ct.uniqueResult();
+            if (FindWishListId==null) {
+                logger.info("No wishlist entries found for this user");
+                return "wishlist does not exist"; // No wishlist entries found;
+            }
+            tx.commit();
+            return FindWishListId.getBook().getTitle();
+           
+              
+        }    catch (Exception e) {
+            tx.rollback();
+            System.out.println("Transaction rolled back due to: " + e.getMessage());
+        } finally {
+            session.close();
+		
+	}
+		return "failed to get book";
+		
+	}
+	public boolean UpdateBookIdInwishlist(WishList wishlist, Long userId) {
+		Session session = factory.openSession();
+        Transaction tx = session.beginTransaction();
+        try {
+            User existingUser = session.get(User.class, userId);
+            if (existingUser == null) {
+                logger.info("User not found");
+                return false ; // User not found;
+            }
+  
+            Query<WishList> query =   session.createNativeQuery("UPDATE wish_list SET book_id = :bid  WHERE user_id = :uid" , WishList.class); 
+            query.setParameter("uid", existingUser).setParameter("bid", wishlist.getBook().getBookId());;
+           
+            query.executeUpdate();
+            tx.commit();
+            return true;
+        }    catch (Exception e) {
+            tx.rollback();
+            System.out.println("Transaction rolled back due to: " + e.getMessage());
+        } finally {
+            session.close();
+		}
+		return false;
 		
 	}
 }
